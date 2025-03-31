@@ -51,6 +51,8 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
         .name = "zigstring",
         .root_module = lib_mod,
+        .use_lld = false,
+        .use_llvm = false,
     });
 
     // This declares intent for the library to be installed into the standard
@@ -63,6 +65,8 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{
         .name = "zigstring",
         .root_module = exe_mod,
+        .use_lld = false,
+        .use_llvm = false,
     });
 
     // This declares intent for the executable to be installed into the
@@ -97,12 +101,16 @@ pub fn build(b: *std.Build) void {
     // but does not run it.
     const lib_unit_tests = b.addTest(.{
         .root_module = lib_mod,
+        .use_lld = false,
+        .use_llvm = false,
     });
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
     const exe_unit_tests = b.addTest(.{
         .root_module = exe_mod,
+        .use_lld = false,
+        .use_llvm = false,
     });
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
@@ -120,6 +128,8 @@ pub fn build(b: *std.Build) void {
     const exe_check = b.addExecutable(.{
         .name = "zigstring",
         .root_module = exe_mod,
+        .use_lld = false,
+        .use_llvm = false,
     });
     // There is no `b.installArtifact(exe_check);` here.
 

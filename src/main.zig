@@ -88,28 +88,40 @@ test "fuzz String" {
     const Context = struct {
         fn fuzz(context: @This(), input: []const u8) anyerror!void {
             _ = context;
-            std.debug.print("got here {s}\n", .{input});
             const r = str.fromUtf8(input);
             const res = blk: {
-                switch (r) {
-                    .ok => |v| {
-                        break :blk v;
-                    },
-                    .err => {
-                        return;
-                    },
+                std.debug.print("testing to see whether input is unicode...\n", .{});
+                if (std.unicode.utf8ValidateSlice(input)) {
+                    std.debug.print("was unicode\n", .{});
+                    switch (r) {
+                        .ok => |v| {
+                            std.debug.print("matched ok (should happen)\n", .{});
+                            break :blk v;
+                        },
+                        .err => {
+                            std.debug.print("matched err (shouldn't happen)\n", .{});
+                            return error.ShouldntHappen;
+                        },
+                    }
+                } else {
+                    std.debug.print("wasnt unicode\n", .{});
+                    switch (r) {
+                        .ok => {
+                            std.debug.print("matched ok (shouldnt happen)\n", .{});
+                            return error.ShouldntHappen;
+                        },
+                        .err => {
+                            std.debug.print("matched err (should happen)\n", .{});
+                            return; // ok
+                        },
+                    }
                 }
             };
             const string = String.fromStr(std.heap.smp_allocator, res) catch {
-                return;
+                return error.ShouldntHappen;
             };
             defer string.deinit();
         }
     };
     try std.testing.fuzz(Context{}, Context.fuzz, .{});
-}
-
-test "lol" {
-    const gpa = std.heap.smp_allocator;
-    _ = gpa;
 }

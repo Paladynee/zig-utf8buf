@@ -78,6 +78,10 @@ const ValidationResult = union(enum) {
     ok: void,
 };
 
+inline fn stupid(a: anytype) i8 {
+    return @as(i8, @intCast(@as(u8, @truncate(a))));
+}
+
 fn runUtf8Validation(v: []const u8) ValidationResult {
     var index: usize = 0;
     const len = v.len;
@@ -100,7 +104,7 @@ fn runUtf8Validation(v: []const u8) ValidationResult {
         } else {
             const ptr = v.ptr;
             const align_offset = mem.alignPointerOffset(ptr, USIZE_BYTES) orelse {
-                @panic("something really fucking bad happened in `alignPointerOffset`.");
+                break :blk MAX(usize);
             };
             break :blk align_offset;
         }
@@ -140,7 +144,7 @@ fn runUtf8Validation(v: []const u8) ValidationResult {
                     break :blk v[index];
                 };
 
-                if (@as(i8, @intCast(nextval)) >= -64) {
+                if (stupid(nextval) >= -64) {
                     return .{ .err = Utf8Error{ .valid_up_to = old_offset, .error_len = 1 } };
                 }
             } else if (w == 3) {
@@ -172,7 +176,7 @@ fn runUtf8Validation(v: []const u8) ValidationResult {
                     break :blk v[index];
                 };
 
-                if (@as(i8, @intCast(nextval)) >= -64) {
+                if (stupid(nextval) >= -64) {
                     return .{ .err = Utf8Error{ .valid_up_to = old_offset, .error_len = 2 } };
                 }
             } else if (w == 4) {
@@ -199,7 +203,7 @@ fn runUtf8Validation(v: []const u8) ValidationResult {
                         }
                         break :blk v[index];
                     };
-                    if (@as(i8, @intCast(nextval)) >= -64) {
+                    if (stupid(nextval) >= -64) {
                         return .{ .err = Utf8Error{ .valid_up_to = old_offset, .error_len = 2 } };
                     }
                 }
@@ -211,7 +215,7 @@ fn runUtf8Validation(v: []const u8) ValidationResult {
                         }
                         break :blk v[index];
                     };
-                    if (@as(i8, @intCast(nextval)) >= -64) {
+                    if (stupid(nextval) >= -64) {
                         return .{ .err = Utf8Error{ .valid_up_to = old_offset, .error_len = 3 } };
                     }
                 }
@@ -264,7 +268,7 @@ inline fn containsNonascii(x: usize) bool {
 }
 
 inline fn MAX(comptime T: type) T {
-    return @as(usize, @intCast(std.math.maxInt(usize)));
+    return @as(T, std.math.maxInt(T));
 }
 
 pub const char = struct {
